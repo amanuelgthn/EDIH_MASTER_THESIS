@@ -5,7 +5,7 @@ import pandas as pd
 
 df = pd.read_excel('export-edihs.xls', index_col=0)
 #cleaning the dataset if it's value for either of the three columns are empty
-df_cleaner = df.dropna(subset=['Formatted sectors', 'Formatted services', 'Formatted technologies'], how='any')
+df_cleaner = df.dropna(subset=['Formatted sectors', 'Formatted services', 'Formatted technologies', 'Description (indexed field)'], how='any')
 all_data = len(df) - 1 
 
 df_cleaner.to_excel("trial.xlsx", sheet_name="First")
