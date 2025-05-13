@@ -1,10 +1,31 @@
 #!/usr/bin/env python3
 
 
+from typing import Tuple
 import pandas as pd
 # from openpyxl import load_workbook
 
 
+def get_word_count(Formatted__Category: str, dataframe: pd.DataFrame)-> Tuple[str, pd.DataFrame]:
+    word_counts = ''
+    pattern = '\s*-\s*\d+\b'
+    word_counts = (
+        dataframe[Formatted__Category]
+            .dropna()
+            .str.lower()
+            .str.replace(r'\s*-\s*\d+\b', '', regex=True)
+            .str.split(r',\s*')
+            .explode()
+            .str.strip()
+            .value_counts()
+    )
+    word_counts_df = (
+            word_counts
+                .reset_index()
+                .rename(columns={'index': 'Category', 0: 'Count'})
+    )
+
+    return word_counts, word_counts_df
 # # Generating workbook and writer engine
 # excel_workbook = load_workbook("data_before.xlsx")
 # writer = pd.ExcelWriter("data_before.xlsx", engine='openpyxl')
@@ -24,49 +45,14 @@ data_before_df = pd.DataFrame.from_dict(data_before, orient='index')
 
 top = 20
 print("\n\n\n\n")
-word_counts_services = (
-        df_cleaner['Formatted services']
-            .dropna()
-            .str.lower()
-            .str.rstrip(',')
-            .str.split(r',\s*')
-            .explode()
-            .str.strip()
-            .replace('', pd.NA)
-            .dropna()
-            .value_counts()
-            .head(top)
-)
+word_counts_services,word_counts_services_df  = get_word_count('Formatted services', df_cleaner)
+       
 print("The most common occuring key words on Formatted serviecs are the following \n{}".format(word_counts_services))
 print("\n\n\n\n")
-word_counts_technologies = (
-        df_cleaner['Formatted technologies']
-            .dropna()
-            .str.lower()
-            .str.rstrip(',')
-            .str.split(r',\s*')
-            .explode()
-            .str.strip()
-            .replace('', pd.NA)
-            .dropna()
-            .value_counts()
-            .head(top)
-)
+word_counts_technologies, word_counts_technologies_df = get_word_count('Formatted technologies', df_cleaner)
 print("The most common occuring key words on Formatted technologies are the following \n{}".format(word_counts_technologies))
 print("\n\n\n\n")
-word_counts_sectors = (
-        df_cleaner['Formatted sectors']
-            .dropna()
-            .str.lower()
-            .str.rstrip(',')
-            .str.split(r',\s*')
-            .explode()
-            .str.strip()
-            .replace('', pd.NA)
-            .dropna()
-            .value_counts()
-            .head(top)
-)
+word_counts_sectors, word_counts_sectors_df = get_word_count('Formatted sectors', df_cleaner)
 print("The most common occuring key words on Formatted sectors are the following \n{}".format(word_counts_sectors))
 print("\n\n\n\n")
 # data_before_df.to_excel(writer,  sheet_name="Original")
@@ -91,6 +77,9 @@ with pd.ExcelWriter("trial.xlsx", engine="openpyxl") as writer:
     country_counts_df = pd.DataFrame.from_dict(country_counts, orient="index")
     country_counts_df.to_excel(writer, sheet_name="cleaned")
     df_cleaner.to_excel(writer, sheet_name="Cleaned_FULL")
+    word_counts_services_df.to_excel(writer, sheet_name='services')
+    word_counts_technologies_df.to_excel(writer, sheet_name='technologies')
+    word_counts_sectors_df.to_excel(writer, sheet_name='sectors')
 print(type(country_counts))
 print(country_counts)
 qualified_data = sum(country_counts.values())
