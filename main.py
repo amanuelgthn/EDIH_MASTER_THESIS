@@ -3,6 +3,8 @@
 
 from typing import Tuple
 import pandas as pd
+
+prepare_scrape_df = __import__('CleanData').prepare_scrape_df
 # from openpyxl import load_workbook
 
 
@@ -32,7 +34,14 @@ def get_word_count(Formatted__Category: str, dataframe: pd.DataFrame)-> Tuple[st
 # writer.book = excel_workbook
 df = pd.read_excel('export-edihs.xls', index_col=0)
 #cleaning the dataset if it's value for either of the three columns are empty
-df_cleaner = df.dropna(subset=['Formatted sectors', 'Formatted services', 'Formatted technologies', 'Description (indexed field)'], thresh=2)
+df['Website'] = (
+    df['Website']
+      .astype(str)  # in case you have NaNs
+      .str.replace(r'(?i)^website$', '', regex=True)
+)
+
+df_cleaner, df_to_scrape, missing_info = prepare_scrape_df(df)
+
 all_data = len(df)
 
 data_row = {
@@ -80,6 +89,8 @@ with pd.ExcelWriter("trial.xlsx", engine="openpyxl") as writer:
     word_counts_services_df.to_excel(writer, sheet_name='services')
     word_counts_technologies_df.to_excel(writer, sheet_name='technologies')
     word_counts_sectors_df.to_excel(writer, sheet_name='sectors')
+    df_to_scrape.to_excel(writer, sheet_name='data required to be scrapped')
+    missing_info.to_excel(writer, sheet_name='missing info')
 print(type(country_counts))
 print(country_counts)
 qualified_data = sum(country_counts.values())
