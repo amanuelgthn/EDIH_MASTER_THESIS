@@ -36,6 +36,7 @@ df = pd.read_excel('export-edihs.xls', index_col=0)
 #cleaning the dataset if it's value for either of the three columns are empty
 df['Website'] = (
     df['Website']
+      .fillna('')
       .astype(str)  # in case you have NaNs
       .str.replace(r'(?i)^website$', '', regex=True)
 )
@@ -80,7 +81,9 @@ data = {
 
 country_counts  = df_cleaner['Country'].value_counts().to_dict()
 missing = data_before.keys() - country_counts.keys()
-print(missing)
+print(missing[0], type(missing))
+for country in missing:
+    
 with pd.ExcelWriter("trial.xlsx", engine="openpyxl") as writer:
     data_before_df.to_excel(writer, sheet_name="before")
     country_counts_df = pd.DataFrame.from_dict(country_counts, orient="index")

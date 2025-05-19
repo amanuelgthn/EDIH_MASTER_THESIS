@@ -2,13 +2,14 @@
 
 from typing import Tuple
 import pandas as pd
+import numpy as np
 
 def prepare_scrape_df(
         df: pd.DataFrame,
         subset_cols: list[str] = None,
         thresh: int = 3,
         website_col: str = 'Website',
-        target_cols: list[str] = ['Formatted sectors',
+        target_cols: list[str] = ['Formatted services',
                                   'Formatted sectors',
                                   'Formatted technologies']) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -33,18 +34,21 @@ def prepare_scrape_df(
         subset_cols = target_cols + [website_col]
     print(subset_cols)
 
-    
+    df.replace('', np.nan, inplace=True)
     #first step cleanup; dropping those which doesn't have at least three of the mentioned columns
-    df_cleaner = df.dropna(subset=target_cols, thresh=2)
+    df_cleaner = df.dropna(subset=subset_cols, thresh=3)
 
     #Second step; identify row missing data but with a valid website
     needs_scraping_mask = (
-        df_cleaner[website_col].notna()            # has a valid website
+        df_cleaner[website_col].notna()
+        & df_cleaner[target_cols].isna().any(axis=1)            # has a valid website
     )
-    df_to_scrape = df_cleaner.loc[needs_scraping_mask].copy()
 
+    df_to_scrape = df_cleaner.loc[needs_scraping_mask].copy()
+    df
     # Step 3: Record which fields are missing
     missing_info = df_to_scrape[target_cols].isna()
+
 
     return df_cleaner, df_to_scrape, missing_info
 
