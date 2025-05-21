@@ -38,18 +38,29 @@ def prepare_scrape_df(
     #first step cleanup; dropping those which doesn't have at least three of the mentioned columns
     df_cleaner = df.dropna(subset=subset_cols, thresh=3)
 
+    
+
+
+    return df_cleaner
+
+
+def data_to_scrape(df_cleaned: pd.DataFrame, website_col: str = 'Website',
+                   subset_cols: list[str] = None,
+                   target_cols: list[str] = ['Formatted services',
+                                             'Formatted sectors',
+                                             'Formatted technologies'] )-> Tuple[pd.DataFrame,pd.DataFrame]:
+    
+    if subset_cols is None:
+        subset_cols = target_cols + [website_col]
     #Second step; identify row missing data but with a valid website
     needs_scraping_mask = (
-        df_cleaner[website_col].notna()
-        & df_cleaner[target_cols].isna().any(axis=1)            # has a valid website
+        df_cleaned[website_col].notna()
+        & df_cleaned[target_cols].isna().any(axis=1)            # has a valid website
     )
 
-    df_to_scrape = df_cleaner.loc[needs_scraping_mask].copy()
-    df
+    df_to_scrape = df_cleaned.loc[needs_scraping_mask].copy()
+
     # Step 3: Record which fields are missing
     missing_info = df_to_scrape[target_cols].isna()
 
-
-    return df_cleaner, df_to_scrape, missing_info
-
-    
+    return df_to_scrape, missing_info

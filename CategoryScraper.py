@@ -5,14 +5,14 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from typing import List, Dict
 import pandas as pd
+import asyncio
 
+# you’ll need to install these two:
+# pip install googletrans==4.0.0-rc1 scikit-learn
+from googletrans import Translator
+from sklearn.feature_extraction.text import CountVectorizer
 
 class CategoryScraper:
-    """
-    Encapsulates logic to fill missing Formatted sectors, services,
-    and technologies columns by scraping hub websites for known keywords.
-    """
-
     def __init__(
         self,
         df: pd.DataFrame,
@@ -20,84 +20,110 @@ class CategoryScraper:
         sector_keywords: List[str],
         service_keywords: List[str],
         tech_keywords: List[str],
+        translator: Translator = None
     ):
         self.df = df.copy()
         self.site_col = site_col
-        # mapping from DataFrame column → list of keywords to look for
         self.mapping: Dict[str, List[str]] = {
             'Formatted sectors': sector_keywords,
             'Formatted services': service_keywords,
             'Formatted technologies': tech_keywords,
         }
+        # one single Translator instance for all calls
+        self.translator = translator or Translator()
 
-    def scrape_by_keywords(self, base_url: str, keywords: List[str]) -> List[str]:
-        """
-        1) Fetch base_url, parse links; if any <a> text or href matches a keyword slug,
-           follow that link, else stay on base_url.
-        2) Scan the chosen page for all keywords and return those found.
-        """
-        try:
-            resp = requests.get(base_url, timeout=8)
-            resp.raise_for_status()
-            soup = BeautifulSoup(resp.text, 'html.parser')
-        except Exception:
-            return []
+    def _get_translated_text(self, url: str) -> str:
+        r = requests.get(url, timeout=8)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, 'html.parser')
+        raw = soup.get_text(separator=' ', strip=True)
 
-        # try to find a dedicated subpage for any keyword
-        subpage_url = None
-        for a in soup.select('a[href]'):
-            href = a['href']
-            text = a.get_text(" ", strip=True).lower()
-            for kw in keywords:
-                slug = kw.lower().replace(' ', '-')
-                if kw.lower() in text or slug in href.lower():
-                    subpage_url = urljoin(base_url, href)
+        coro = self.translator.translate(raw, dest='en')
+        loop = asyncio.get_event_loop()
+        translation = loop.run_until_complete(coro)
+        return translation.text.lower()
+
+    def scrape_and_translate(self, base_url: str) -> str:
+        """
+        Get the “main” text to analyze:
+        1) look for a subpage link matching any keyword slug
+        2) fetch that page if present
+        3) translate whole thing into English
+        """
+        # step 1: initial fetch
+        r = requests.get(base_url, timeout=8); r.raise_for_status()
+        soup = BeautifulSoup(r.text, 'html.parser')
+
+        # look for a keyword-slug link to follow
+        subpage = None
+        for col, kws in self.mapping.items():
+            for a in soup.select('a[href]'):
+                href = a['href']
+                text = a.get_text(" ", strip=True).lower()
+                for kw in kws:
+                    slug = kw.lower().replace(' ', '-')
+                    if slug in href.lower() or kw.lower() in text:
+                        subpage = urljoin(base_url, href)
+                        break
+                if subpage:
                     break
-            if subpage_url:
+            if subpage:
                 break
 
-        # fetch the subpage if found
-        target_soup = soup
-        if subpage_url:
-            try:
-                r2 = requests.get(subpage_url, timeout=8)
-                r2.raise_for_status()
-                target_soup = BeautifulSoup(r2.text, 'html.parser')
-            except Exception:
-                pass
+        # pick which URL to translate  
+        return self._get_translated_text(subpage or base_url)
 
-        full_text = target_soup.get_text(" ").lower()
-        # return only the keywords that actually appear
-        return [kw for kw in keywords if kw.lower() in full_text]
+    def extract_top_n(
+        self,
+        text: str,
+        keywords: List[str],
+        top_n: int = 20
+    ) -> List[str]:
+        """
+        Count only tokens in `keywords` and return the top_n by frequency.
+        """
+        # build lowercase vocabulary
+        vocab = [kw.lower() for kw in keywords]
+
+        vec = CountVectorizer(
+            vocabulary=vocab,
+            lowercase=True,
+            token_pattern=r'\b\w+(?:\s+\w+)*\b'
+        )
+        X = vec.fit_transform([text])
+        counts = X.sum(axis=0).A1
+        tokens = vec.get_feature_names_out()
+
+        # sort descending by count and take top_n
+        freq = sorted(zip(tokens, counts), key=lambda x: -x[1])
+        return [tok for tok, _ in freq[:top_n]]
 
     def fill_missing(self) -> pd.DataFrame:
         """
-        For each of the three target columns, if a cell is NaN and the site URL exists,
-        scrape and fill it with any found keywords (comma-joined).
+        For each missing cell, translate & scrape, then extract only from the
+        pre-defined keywords for that column.
         """
         for col, kws in self.mapping.items():
             mask = self.df[col].isna() & self.df[self.site_col].notna()
             for idx in self.df.index[mask]:
                 url = self.df.at[idx, self.site_col]
-                found = self.scrape_by_keywords(url, kws)
-                if found:
-                    self.df.at[idx, col] = ", ".join(found)
+                top_keywords: List[str] = []
+                try:
+                    en_text = self.scrape_and_translate(url)
+                    # pass in the specific keyword list for this column
+                    top_keywords = self.extract_top_n(en_text, kws, top_n=10)
+                    self.df.at[idx, col] = ", ".join(top_keywords)
+                except Exception as e:
+                    print(f"Error on {url}: {e} (skipping)")
+                    continue
         return self.df
 
-
-# --- Usage example ---
-
-# assume you already computed:
-#   sectors_list  = word_counts_sectors.index.tolist()
-#   services_list = word_counts_services.index.tolist()
-#   tech_list     = word_counts_tech.index.tolist()
-
-scraper = CategoryScraper(
-    df=df,
-    site_col='Website',
-    sector_keywords=sectors_list,
-    service_keywords=services_list,
-    tech_keywords=tech_list,
-)
-
-df_filled = scraper.fill_missing()
+# --- Usage ---
+# scraper = CategoryScraper(
+#     df=df,
+#     site_col='Website',
+#     sector_keywords=sectors_list,
+#     service_keywords=services_list,
+#     tech_keywords=tech_list,
+# )
+# df_filled = scraper.fill_missing()
