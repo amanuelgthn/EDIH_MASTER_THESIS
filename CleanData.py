@@ -4,7 +4,7 @@ from typing import Tuple
 import pandas as pd
 import numpy as np
 
-def prepare_scrape_df(
+def cleanData(
         df: pd.DataFrame,
         subset_cols: list[str] = None,
         thresh: int = 3,
@@ -36,10 +36,7 @@ def prepare_scrape_df(
 
     df.replace('', np.nan, inplace=True)
     #first step cleanup; dropping those which doesn't have at least three of the mentioned columns
-    df_cleaner = df.dropna(subset=subset_cols, thresh=3)
-
-    
-
+    df_cleaner = df.dropna(subset=subset_cols, thresh=thresh)
 
     return df_cleaner
 
@@ -47,7 +44,7 @@ def prepare_scrape_df(
 def data_to_scrape(df_cleaned: pd.DataFrame, website_col: str = 'Website',
                    subset_cols: list[str] = None,
                    target_cols: list[str] = ['Formatted services',
-                                             'Formatted sectors',
+                                            'Formatted sectors',
                                              'Formatted technologies'] )-> Tuple[pd.DataFrame,pd.DataFrame]:
     
     if subset_cols is None:

@@ -2,7 +2,7 @@
 
 
 from typing import Tuple
-from CleanData import prepare_scrape_df, data_to_scrape
+from CleanData import cleanData, data_to_scrape
 import pandas as pd
 import CategoryScraper
 
@@ -12,12 +12,12 @@ import CategoryScraper
 
 def get_word_count(Formatted__Category: str, dataframe: pd.DataFrame)-> Tuple[str, pd.DataFrame]:
     word_counts = ''
-    pattern = '\s*-\s*\d+\b'
+    pattern = r'\s*-\s*\d+\b'
     word_counts = (
         dataframe[Formatted__Category]
             .dropna()
             .str.lower()
-            .str.replace(r'\s*-\s*\d+\b', '', regex=True)
+            .str.replace(pattern, '', regex=True)
             .str.split(r',\s*')
             .explode()
             .str.strip()
@@ -43,7 +43,7 @@ df['Website'] = (
       .str.replace(r'(?i)^website$', '', regex=True)
 )
 
-df_cleaner = prepare_scrape_df(df)
+df_cleaner = cleanData(df)
 
 all_data = len(df)
 
