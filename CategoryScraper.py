@@ -8,9 +8,14 @@ import pandas as pd
 import asyncio
 
 # you’ll need to install these two:
-# pip install googletrans==4.0.0-rc1 scikit-learn
+# pip install googletrans==4.0.0-rc1 scikit-learn selenium webdriver-manager
 from googletrans import Translator
 from sklearn.feature_extraction.text import CountVectorizer
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import WebDriverException, TimeoutException
 
 class CategoryScraper:
     def __init__(
@@ -32,15 +37,58 @@ class CategoryScraper:
         # one single Translator instance for all calls
         self.translator = translator or Translator()
 
+    def _get_page_content(self, url: str) -> str:
+        """
+        Helper method to get page content, trying requests first, then Selenium.
+        """
+        try:
+            r = requests.get(url, timeout=8)
+            r.raise_for_status()
+            return r.text
+        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
+            print(f"Requests failed for {url}: {e}. Trying Selenium...")
+            try:
+                chrome_options = Options()
+                chrome_options.add_argument("--headless")  # Run in headless mode (no UI)
+                chrome_options.add_argument("--no-sandbox")
+                chrome_options.add_argument("--disable-dev-shm-usage")
+                chrome_options.add_argument("--window-size=1920,1080")
+                chrome_options.add_argument("--disable-gpu")
+                chrome_options.add_argument("--start-maximized") #for maximized consistent rendering
+
+                # Options to make Selenium less detectable
+                chrome_options.add_argument("--disable-blink-features=AutomationControlled") 
+                chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                chrome_options.add_experimental_option('useAutomationExtension', False)
+                
+                # Set user-agent for Selenium to mimic a real browser
+                chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
+                
+                # If you have chromedriver in PATH, you don't need service
+                # If not, you might need to specify the path:
+                # service = Service('/path/to/chromedriver')
+                # driver = webdriver.Chrome(service=service, options=chrome_options)
+                
+                driver = webdriver.Chrome(options=chrome_options)
+                driver.set_page_load_timeout(30) # Increased timeout for Selenium
+                driver.get(url)
+                page_source = driver.page_source
+                driver.quit()
+                return page_source
+            except (WebDriverException, TimeoutException) as se:
+                print(f"Selenium also failed for {url}: {se}")
+                raise
+
     def _get_translated_text(self, url: str) -> str:
-        r = requests.get(url, timeout=8)
-        r.raise_for_status()
-        soup = BeautifulSoup(r.text, 'html.parser')
+        page_content = self._get_page_content(url)
+        soup = BeautifulSoup(page_content, 'html.parser')
         raw = soup.get_text(separator=' ', strip=True)
 
         coro = self.translator.translate(raw, dest='en')
         loop = asyncio.get_event_loop()
         translation = loop.run_until_complete(coro)
+        print(f"Translated text for {url}: {translation.text[:500]}")
+
         return translation.text.lower()
 
     def scrape_and_translate(self, base_url: str) -> str:
@@ -51,8 +99,8 @@ class CategoryScraper:
         3) translate whole thing into English
         """
         # step 1: initial fetch
-        r = requests.get(base_url, timeout=8); r.raise_for_status()
-        soup = BeautifulSoup(r.text, 'html.parser')
+        page_content = self._get_page_content(base_url)
+        soup = BeautifulSoup(page_content, 'html.parser')
 
         # look for a keyword-slug link to follow
         subpage = None
@@ -71,6 +119,7 @@ class CategoryScraper:
                 break
 
         # pick which URL to translate  
+        
         return self._get_translated_text(subpage or base_url)
 
     def extract_top_n(
