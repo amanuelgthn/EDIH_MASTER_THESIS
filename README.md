@@ -63,20 +63,18 @@ flowchart LR
 
  ```bash
   git clone https://github.com/amanueltghn/EDIH_MASTER_THESIS.git
- cd EDIH_MASTER_THESIS \```
-
+ cd EDIH_MASTER_THESIS\```
 ## 2. Activate the environment (recommended):
 
 #### Linux/Mac:
 
  ```bash
-  source thesis/bin/activate \```
+  source thesis/bin/activate\```
 Windows:
 
 #### powershell
  ```bash
-thesis\Scripts\activate \```
-
+thesis\Scripts\activate\```
 ## 3.Install dependencies
 If not already included in the environment:
 
@@ -88,8 +86,7 @@ If not already included in the environment:
 Scraping:
 
  ```bash
-  python CategoryScraper.py \```
-
+  python CategoryScraper.py\```
 Cleaning:
 
  ```bash
