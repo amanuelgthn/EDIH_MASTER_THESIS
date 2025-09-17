@@ -1,30 +1,109 @@
 # EDIH_MASTER_THESIS
-Python repository for EDIH Ecosystem Analysis, focusing on sectors, services, and technologies.
 
-flowchart TD
-  %% Phase labels
-  subgraph Phase1 [Phase 1 – Observation & Conceptualization]
-    L1[1. Literature & Policy Scan<br/>• EC DIH catalogues<br/>• D-BEST, DR-BEST, etc.]
-    L2[2. Industrial Requirements Harvesting<br/>• Interviews with 5–8 EDIH coordinators<br/>• Policy calls & docs]
-    L3[3. Initial SST Framework Sketch<br/>• 3-level taxonomy draft]
-  end
+This repository contains the codebase for my Master's thesis research on **EDIH Ecosystem Analysis**, focusing on **sectors, services, and technologies (SST)**.  
+It supports the data pipeline from **web scraping → cleaning → post-processing → matrix generation → clustering analysis**, forming the computational foundation that complements the thesis.
 
-  subgraph Phase2 [Phase 2 – Theory & Tool Development]
-    M1[1. Data Acquisition & Filtering<br/>• EC portal scraping/API]
-    M2[2. Data Cleaning & Normalization<br/>• Harmonize labels, geocode]
-    M3[3. Taxonomy Instantiation<br/>• Assign offerings → Level 1/2/3 classes]
-    M4[4. Analytical Procedures<br/>• Clustering, gap‐mapping]
-    M5[5. Proof-of-Concept Dashboard<br/>• Shiny/Dash interface]
-  end
+---
 
-  subgraph Phase3 [Phase 3 – Validation & Refinement]
-    N1[1. Expert Review<br/>• Panel of 10 EDIH reps + 5 policymakers]
-    N2[2. Benchmarking<br/>• Compare vs. D-BEST, DR-BEST]
-    N3[3. Iterative Refinement<br/>• Update taxonomy & dashboard]
-    N4[4. Final Assessment<br/>• SUS survey of 50 users]
-  end
+## 📂 Folders
 
-  %% Flow arrows
-  L1 --> L2 --> L3 --> M1
-  M1 --> M2 --> M3 --> M4 --> M5 --> N1
-  N1 --> N2 --> N3 --> N4
+### `SST_Matrix/`
+Contains scripts and outputs for **SST matrix generation**:
+- Builds pairwise and 3D co-occurrence matrices (Sector × Service × Technology).
+- Produces annotated heatmaps for Top-K slices.  
+
+👉 See [SST_Matrix/README.md](./SST_Matrix/README.md) for details.
+
+---
+
+### `Clustering/`
+Implements clustering methodologies (mainly hierarchical) on hubs and countries.  
+Includes:
+- **`heirarchical/`** → final clustering pipeline.  
+- **`Clustering_Legacy_Archive/`** → earlier clustering experiments.  
+- **Outputs:** Excel cluster reports, dendrograms, standardized datasets.  
+
+👉 Each subfolder has its own documentation.
+
+---
+
+### `Post_Scraping/`
+Holds **post-processed Excel files** (e.g., `combined_further_cleaned_keywords.xlsx`) and scripts for refining scraped data.  
+Used as the bridge between scraping and matrix generation.  
+
+👉 Separate README provides instructions.
+
+---
+
+### `thesis/`
+This folder contains the **Python virtual environment** used in the project.  
+Before running any scripts, you should activate it:
+
+- On **Linux/Mac**:
+  ```bash
+  source thesis/bin/activate
+On Windows (PowerShell):
+
+### powershell
+Copy code
+thesis\Scripts\activate
+This ensures the correct package versions are loaded for reproducibility.
+
+## Workflow
+mermaid
+Copy code
+flowchart LR
+    A[CategoryScraper.py] --> B[CleanData.py]
+    B --> C[Post_Scraping/]
+    C --> D[SST_Matrix/]
+    D --> E[Clustering/]
+    E --> F[Final Outputs: Reports, Heatmaps, Clusters]
+## 🚀 Usage
+## 1. Clone the repository
+
+bash
+Copy code
+git clone https://github.com/amanueltghn/EDIH_MASTER_THESIS.git
+cd EDIH_MASTER_THESIS
+
+## 2. Activate the environment (recommended):
+
+#### Linux/Mac:
+
+bash
+Copy code
+source thesis/bin/activate
+Windows:
+
+#### powershell
+Copy code
+thesis\Scripts\activate
+
+## 3.Install dependencies
+If not already included in the environment:
+
+bash
+Copy code
+pip install -r requirements.txt
+
+## 4.Run scripts as needed
+
+Scraping:
+
+bash
+Copy code
+python CategoryScraper.py
+Cleaning:
+
+bash
+Copy code
+python CleanData.py
+End-to-end pipeline:
+
+bash
+Copy code
+python main.py
+📖 Documentation
+Each major folder (SST_Matrix, Clustering, Post_Scraping) has or will have its own README with detailed instructions.
+This main README provides a high-level overview of how the pieces fit together.
+
