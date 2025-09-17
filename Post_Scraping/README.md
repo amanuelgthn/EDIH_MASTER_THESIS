@@ -99,6 +99,7 @@ Install dependencies with:
 
 ```bash
 pip install pandas numpy openpyxl plotly pycountry Pillow geopy kaleido
+```
 pandas, numpy, openpyxl → data handling & Excel I/O
 
 plotly, kaleido → choropleth & static image export
