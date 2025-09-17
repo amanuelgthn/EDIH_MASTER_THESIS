@@ -45,13 +45,13 @@ Before running any scripts, you should activate it:
 On Windows (PowerShell):
 
 ### powershell
-Copy code
+
 thesis\Scripts\activate
 This ensures the correct package versions are loaded for reproducibility.
 
 ## Workflow
 mermaid
-Copy code
+
 flowchart LR
     A[CategoryScraper.py] --> B[CleanData.py]
     B --> C[Post_Scraping/]
@@ -62,7 +62,7 @@ flowchart LR
 ## 1. Clone the repository
 
 bash
-Copy code
+
 git clone https://github.com/amanueltghn/EDIH_MASTER_THESIS.git
 cd EDIH_MASTER_THESIS
 
@@ -71,12 +71,12 @@ cd EDIH_MASTER_THESIS
 #### Linux/Mac:
 
 bash
-Copy code
+
 source thesis/bin/activate
 Windows:
 
 #### powershell
-Copy code
+
 thesis\Scripts\activate
 
 ## 3.Install dependencies
@@ -91,17 +91,18 @@ pip install -r requirements.txt
 Scraping:
 
 bash
-Copy code
+
 python CategoryScraper.py
+
 Cleaning:
 
 bash
-Copy code
+
 python CleanData.py
 End-to-end pipeline:
 
 bash
-Copy code
+
 python main.py
 📖 Documentation
 Each major folder (SST_Matrix, Clustering, Post_Scraping) has or will have its own README with detailed instructions.
