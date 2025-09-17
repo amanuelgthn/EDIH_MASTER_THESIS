@@ -111,12 +111,13 @@ Perform **Ward hierarchical clustering** on the standardized features and export
 ### Install dependencies
 ```bash
 pip install pandas numpy scipy scikit-learn matplotlib XlsxWriter
+```
 (If you prefer openpyxl for Excel, change the writer engine accordingly.)
 
 Run Step 1 – Data preparation
-bash
-Copy code
+```bash
 python data_preparation.py
+```
 This writes:
 
 country_features_raw.csv
@@ -124,9 +125,9 @@ country_features_raw.csv
 country_features_standardized.csv
 
 Run Step 2 – Clustering
-bash
-Copy code
+```bash
 python clustering.py
+```
 This writes:
 
 dendrogram_ward.png
@@ -162,9 +163,9 @@ WCSS: Lower values = tighter clusters (compare across K).
 ModuleNotFoundError: No module named 'xlsxwriter'
 Install it:
 
-bash
-Copy code
+```bash
 pip install XlsxWriter
+```
 (or switch writer engine to openpyxl in clustering.py).
 
 KeyError: Sheet not found / column not found
@@ -174,7 +175,8 @@ Delimiter mismatch
 If tags separated by ; instead of ,, change parse_list():
 
 python
-Copy code
+```bash
 str(cell).split(";")
+```
 Empty or tiny clusters
 Try different K_LIST values or review feature definitions (e.g., expand ADVANCED_TECHS or BUSINESS_SERVICES
