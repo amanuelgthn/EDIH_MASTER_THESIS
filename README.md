@@ -42,6 +42,7 @@ Before running any scripts, you should activate it:
 - On **Linux/Mac**:
   ```bash
   source thesis/bin/activate
+  ```
 On Windows (PowerShell):
 
 ### powershell
@@ -63,38 +64,45 @@ flowchart LR
 
  ```bash
   git clone https://github.com/amanueltghn/EDIH_MASTER_THESIS.git
- cd EDIH_MASTER_THESIS\```
+ cd EDIH_MASTER_THESIS
+```
 ## 2. Activate the environment (recommended):
 
 #### Linux/Mac:
 
  ```bash
-  source thesis/bin/activate\```
+  source thesis/bin/activate
+```
 Windows:
 
 #### powershell
  ```bash
-thesis\Scripts\activate\```
+thesis\Scripts\activate
+```
 ## 3.Install dependencies
 If not already included in the environment:
 
  ```bash
-  pip install -r requirements.txt \```
+  pip install -r requirements.txt
+```
 
 ## 4.Run scripts as needed
 
 Scraping:
 
  ```bash
-  python CategoryScraper.py\```
+  python CategoryScraper.py
+```
 Cleaning:
 
  ```bash
-  python CleanData.py \```
+  python CleanData.py
+```
 End-to-end pipeline:
 
  ```bash
-  python main.py \```
+  python main.py
+```
 📖 Documentation
 Each major folder (SST_Matrix, Clustering, Post_Scraping) has or will have its own README with detailed instructions.
 This main README provides a high-level overview of how the pieces fit together.
